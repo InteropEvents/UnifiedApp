@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Push-triggered presence updates through Microsoft Graph webhooks and WebSocket relay.">
+  <title>Presence: Real-Time Updates with Webhooks | Unified App</title>
+  <style>
+    :root {
+      --ink: #102d38;
+      --body: #344b54;
+      --muted: #687b83;
+      --canvas: #f4f7f6;
+      --paper: #ffffff;
+      --line: #dce6e4;
+      --accent: #c94f8a;
+      --accent-soft: #fbeaf3;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--body);
+      background: var(--canvas);
+      font-family: "Segoe UI", "Segoe UI Variable", sans-serif;
+      font-size: 16px;
+      line-height: 1.58;
+      letter-spacing: 0;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 0 32px;
+      color: #fff;
+      background: #102d38;
+      box-shadow: 0 3px 16px rgba(10, 38, 48, .18);
+    }
+    .brand { font-weight: 700; }
+    .topnav { display: flex; gap: 22px; }
+    .topnav a { color: #dce9e8; text-decoration: none; font-size: 14px; }
+    .topnav a[aria-current="page"] { color: #fff; font-weight: 700; }
+    .sheet {
+      width: min(1480px, calc(100% - 48px));
+      margin: 36px auto 72px;
+      padding: 54px 64px 64px;
+      background: var(--paper);
+      border-top: 8px solid var(--accent);
+      box-shadow: 0 16px 44px rgba(12, 47, 58, .10);
+    }
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .number {
+      display: inline-grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    h1 {
+      margin: 0 0 28px;
+      color: var(--ink);
+      font-size: clamp(38px, 5vw, 68px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 48px 0 16px;
+      padding-top: 12px;
+      color: var(--ink);
+      font-size: 28px;
+      border-top: 1px solid var(--line);
+    }
+    h3 { margin: 28px 0 10px; color: var(--ink); font-size: 20px; }
+    p { max-width: 1050px; }
+    ol, ul { padding-left: 24px; }
+    li { margin: 7px 0; }
+    strong { color: var(--ink); }
+    .diagram {
+      margin: 0 0 38px;
+      padding: 22px 18px 12px;
+      overflow-x: auto;
+      background: linear-gradient(180deg, var(--accent-soft), #fff 72%);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+    .diagram svg { display: block; width: 100%; height: auto; max-height: 720px; margin: auto; }
+    .highlight {
+      margin: 12px 0 24px;
+      overflow-x: auto;
+      background: #102d38;
+      border-left: 5px solid var(--accent);
+      border-radius: 4px;
+    }
+    .highlight pre { margin: 0; padding: 20px 22px; color: #e8f3f2; font: 14px/1.55 Consolas, monospace; }
+    code { font-family: Consolas, monospace; }
+    p code, li code { padding: 2px 6px; color: #163f4c; background: #edf3f2; border-radius: 3px; }
+    blockquote {
+      margin: 22px 0 0;
+      padding: 20px 24px;
+      color: var(--ink);
+      background: var(--accent-soft);
+      border-left: 6px solid var(--accent);
+      font-size: 19px;
+      font-weight: 600;
+    }
+    blockquote p { margin: 0; }
+    .footer { margin-top: 52px; color: var(--muted); font-size: 13px; }
+    .print-button {
+      padding: 8px 13px;
+      color: #fff;
+      background: transparent;
+      border: 1px solid #719096;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #6e7681 }
+.highlight { background: #0d1117; color: #E6EDF3 }
+.highlight .c { color: #8B949E; font-style: italic } /* Comment */
+.highlight .err { color: #F85149 } /* Error */
+.highlight .esc { color: #E6EDF3 } /* Escape */
+.highlight .g { color: #E6EDF3 } /* Generic */
+.highlight .k { color: #FF7B72 } /* Keyword */
+.highlight .l { color: #A5D6FF } /* Literal */
+.highlight .n { color: #E6EDF3 } /* Name */
+.highlight .o { color: #FF7B72; font-weight: bold } /* Operator */
+.highlight .x { color: #E6EDF3 } /* Other */
+.highlight .p { color: #E6EDF3 } /* Punctuation */
+.highlight .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.highlight .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.highlight .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.highlight .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FFA198 } /* Generic.Error */
+.highlight .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.highlight .go { color: #8B949E } /* Generic.Output */
+.highlight .gp { color: #8B949E } /* Generic.Prompt */
+.highlight .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #79C0FF } /* Generic.Subheading */
+.highlight .gt { color: #FF7B72 } /* Generic.Traceback */
+.highlight .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.highlight .kc { color: #79C0FF } /* Keyword.Constant */
+.highlight .kd { color: #FF7B72 } /* Keyword.Declaration */
+.highlight .kn { color: #FF7B72 } /* Keyword.Namespace */
+.highlight .kp { color: #79C0FF } /* Keyword.Pseudo */
+.highlight .kr { color: #FF7B72 } /* Keyword.Reserved */
+.highlight .kt { color: #FF7B72 } /* Keyword.Type */
+.highlight .ld { color: #79C0FF } /* Literal.Date */
+.highlight .m { color: #A5D6FF } /* Literal.Number */
+.highlight .s { color: #A5D6FF } /* Literal.String */
+.highlight .na { color: #E6EDF3 } /* Name.Attribute */
+.highlight .nb { color: #E6EDF3 } /* Name.Builtin */
+.highlight .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.highlight .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.highlight .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #FFA657 } /* Name.Entity */
+.highlight .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.highlight .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #FF7B72 } /* Name.Namespace */
+.highlight .nx { color: #E6EDF3 } /* Name.Other */
+.highlight .py { color: #79C0FF } /* Name.Property */
+.highlight .nt { color: #7EE787 } /* Name.Tag */
+.highlight .nv { color: #79C0FF } /* Name.Variable */
+.highlight .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.highlight .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.highlight .w { color: #6E7681 } /* Text.Whitespace */
+.highlight .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.highlight .mf { color: #A5D6FF } /* Literal.Number.Float */
+.highlight .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.highlight .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.highlight .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.highlight .sa { color: #79C0FF } /* Literal.String.Affix */
+.highlight .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.highlight .sc { color: #A5D6FF } /* Literal.String.Char */
+.highlight .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.highlight .sd { color: #A5D6FF } /* Literal.String.Doc */
+.highlight .s2 { color: #A5D6FF } /* Literal.String.Double */
+.highlight .se { color: #79C0FF } /* Literal.String.Escape */
+.highlight .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.highlight .si { color: #A5D6FF } /* Literal.String.Interpol */
+.highlight .sx { color: #A5D6FF } /* Literal.String.Other */
+.highlight .sr { color: #79C0FF } /* Literal.String.Regex */
+.highlight .s1 { color: #A5D6FF } /* Literal.String.Single */
+.highlight .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.highlight .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.highlight .vc { color: #79C0FF } /* Name.Variable.Class */
+.highlight .vg { color: #79C0FF } /* Name.Variable.Global */
+.highlight .vi { color: #79C0FF } /* Name.Variable.Instance */
+.highlight .vm { color: #79C0FF } /* Name.Variable.Magic */
+.highlight .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+    @media (max-width: 760px) {
+      .topbar { padding: 12px 18px; align-items: flex-start; gap: 12px; flex-direction: column; }
+      .topnav { width: 100%; gap: 14px; overflow-x: auto; }
+      .sheet { width: calc(100% - 20px); margin-top: 18px; padding: 34px 20px 42px; }
+      h2 { font-size: 24px; }
+    }
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body { background: #fff; font-size: 10pt; }
+      .topbar, .print-button { display: none !important; }
+      .sheet { width: 100%; margin: 0; padding: 8mm; box-shadow: none; }
+      h1 { font-size: 30pt; }
+      h2 { break-after: avoid; margin-top: 22px; }
+      h3, .highlight, blockquote { break-inside: avoid; }
+      .diagram { break-inside: avoid; padding: 8px; }
+      .diagram svg { max-height: 115mm; }
+      .highlight pre { white-space: pre-wrap; font-size: 7.5pt; }
+    }
+    </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Unified App · Demo Code Walkthrough</div>
+    <nav class="topnav" aria-label="One-pager navigation"><a href="index.html">All scenarios</a><a href="01-presence-webhook.html" aria-current="page">01 Presence</a><a href="02-calendar-ai-summary.html">02 Calendar AI</a><a href="03-teams-channel-files.html">03 Teams Files</a></nav>
+    <button class="print-button" type="button" onclick="window.print()">Print / Save PDF</button>
+  </header>
+  <main class="sheet">
+    <div class="eyebrow"><span class="number">01</span><span>Microsoft 365 connected scenario</span></div>
+    <h1>Presence: Real-Time Updates with Webhooks</h1>
+
+<h2>What the Demo Shows</h2>
+<ol>
+<li>Unified App subscribes to presence changes for the signed-in user.</li>
+<li>The presenter changes presence in Microsoft Teams.</li>
+<li>Microsoft Graph pushes a notification to the public webhook.</li>
+<li>The backend relays that signal to the front end over WebSocket.</li>
+<li>Unified App retrieves the latest presence and updates without a refresh.</li>
+</ol>
+<div class="diagram"><svg role="img" aria-labelledby="diagram-title-01" focusable="false" id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="max-width: 1617px; background-color: transparent;" viewBox="-50 -10 1617 887" aria-roledescription="sequence"><title id="diagram-title-01">Presence sequence diagram</title><g><rect x="1367" y="801" fill="#eaeaea" stroke="#666" width="150" height="65" name="Backend" rx="3" ry="3" class="actor actor-bottom"/><text x="1442" y="833.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="1442" dy="0">Node.js backend</tspan></text></g><g><rect x="1111" y="801" fill="#eaeaea" stroke="#666" width="150" height="65" name="Tunnel" rx="3" ry="3" class="actor actor-bottom"/><text x="1186" y="833.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="1186" dy="0">Dev Tunnel</tspan></text></g><g><rect x="764" y="801" fill="#eaeaea" stroke="#666" width="150" height="65" name="Graph" rx="3" ry="3" class="actor actor-bottom"/><text x="839" y="833.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="839" dy="0">Microsoft Graph</tspan></text></g><g><rect x="400" y="801" fill="#eaeaea" stroke="#666" width="164" height="65" name="App" rx="3" ry="3" class="actor actor-bottom"/><text x="482" y="833.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="482" dy="0">Unified App front end</tspan></text></g><g><rect x="200" y="801" fill="#eaeaea" stroke="#666" width="150" height="65" name="Teams" rx="3" ry="3" class="actor actor-bottom"/><text x="275" y="833.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Microsoft Teams</tspan></text></g><g/><g><line id="actor5" x1="1442" y1="65" x2="1442" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="Backend" data-et="life-line" data-id="Backend"/><g id="root-5" data-et="participant" data-type="participant" data-id="Backend"><rect x="1367" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="Backend" rx="3" ry="3" class="actor actor-top"/><text x="1442" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="1442" dy="0">Node.js backend</tspan></text></g></g><g><line id="actor4" x1="1186" y1="65" x2="1186" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="Tunnel" data-et="life-line" data-id="Tunnel"/><g id="root-4" data-et="participant" data-type="participant" data-id="Tunnel"><rect x="1111" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="Tunnel" rx="3" ry="3" class="actor actor-top"/><text x="1186" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="1186" dy="0">Dev Tunnel</tspan></text></g></g><g><line id="actor3" x1="839" y1="65" x2="839" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="Graph" data-et="life-line" data-id="Graph"/><g id="root-3" data-et="participant" data-type="participant" data-id="Graph"><rect x="764" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="Graph" rx="3" ry="3" class="actor actor-top"/><text x="839" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="839" dy="0">Microsoft Graph</tspan></text></g></g><g><line id="actor2" x1="482" y1="65" x2="482" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="App" data-et="life-line" data-id="App"/><g id="root-2" data-et="participant" data-type="participant" data-id="App"><rect x="400" y="0" fill="#eaeaea" stroke="#666" width="164" height="65" name="App" rx="3" ry="3" class="actor actor-top"/><text x="482" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="482" dy="0">Unified App front end</tspan></text></g></g><g><line id="actor1" x1="275" y1="65" x2="275" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="Teams" data-et="life-line" data-id="Teams"/><g id="root-1" data-et="participant" data-type="participant" data-id="Teams"><rect x="200" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" name="Teams" rx="3" ry="3" class="actor actor-top"/><text x="275" y="32.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-box" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="275" dy="0">Microsoft Teams</tspan></text></g></g><g><line id="actor0" x1="75" y1="80" x2="75" y2="801" class="actor-line 200" stroke-width="0.5px" stroke="#999" name="User" data-et="life-line" data-id="User"/></g><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#666;stroke:#666;}#my-svg .marker.cross{stroke:#666;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .actor{stroke:hsl(0, 0%, 83%);fill:#eee;stroke-width:1;}#my-svg rect.actor.outer-path[data-look="neo"]{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg rect.note[data-look="neo"]{stroke:#999;fill:#666;filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg text.actor&gt;tspan{fill:#333;stroke:none;}#my-svg .actor-line{stroke:hsl(0, 0%, 83%);}#my-svg .innerArc{stroke-width:1.5;stroke-dasharray:none;}#my-svg .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#333;}#my-svg .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#333;}#my-svg [id$="-arrowhead"] path{fill:#333;stroke:#333;}#my-svg .sequenceNumber{fill:white;}#my-svg [id$="-sequencenumber"]{fill:#333;}#my-svg [id$="-crosshead"] path{fill:#333;stroke:#333;}#my-svg .messageText{fill:#333;stroke:none;}#my-svg .labelBox{stroke:hsl(0, 0%, 83%);fill:#eee;filter:none;}#my-svg .labelText,#my-svg .labelText&gt;tspan{fill:#333;stroke:none;}#my-svg .loopText,#my-svg .loopText&gt;tspan{fill:#333;stroke:none;}#my-svg .sectionTitle,#my-svg .sectionTitle&gt;tspan{fill:#333;stroke:none;}#my-svg .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:hsl(0, 0%, 83%);fill:hsl(0, 0%, 83%);}#my-svg .note{stroke:#999;fill:#666;}#my-svg .noteText,#my-svg .noteText&gt;tspan{fill:#fff;stroke:none;font-weight:normal;}#my-svg .activation0{fill:#f4f4f4;stroke:#666;}#my-svg .activation1{fill:#f4f4f4;stroke:#666;}#my-svg .activation2{fill:#f4f4f4;stroke:#666;}#my-svg .actorPopupMenu{position:absolute;}#my-svg .actorPopupMenuPanel{position:absolute;fill:#eee;box-shadow:0px 8px 16px 0px rgba(0,0,0,0.2);filter:drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4));}#my-svg .actor-man circle,#my-svg line{fill:#eee;stroke-width:2px;}#my-svg g rect.rect{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));stroke:#999;}#my-svg .node .neo-node{stroke:#999;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g/><defs><symbol id="my-svg-computer" width="24" height="24"><path transform="scale(.5)" d="M2 2v13h20v-13h-20zm18 11h-16v-9h16v9zm-10.228 6l.466-1h3.524l.467 1h-4.457zm14.228 3h-24l2-6h2.104l-1.33 4h18.45l-1.297-4h2.073l2 6zm-5-10h-14v-7h14v7z"/></symbol></defs><defs><symbol id="my-svg-database" fill-rule="evenodd" clip-rule="evenodd"><path transform="scale(.5)" d="M12.258.001l.256.004.255.005.253.008.251.01.249.012.247.015.246.016.242.019.241.02.239.023.236.024.233.027.231.028.229.031.225.032.223.034.22.036.217.038.214.04.211.041.208.043.205.045.201.046.198.048.194.05.191.051.187.053.183.054.18.056.175.057.172.059.168.06.163.061.16.063.155.064.15.066.074.033.073.033.071.034.07.034.069.035.068.035.067.035.066.035.064.036.064.036.062.036.06.036.06.037.058.037.058.037.055.038.055.038.053.038.052.038.051.039.05.039.048.039.047.039.045.04.044.04.043.04.041.04.04.041.039.041.037.041.036.041.034.041.033.042.032.042.03.042.029.042.027.042.026.043.024.043.023.043.021.043.02.043.018.044.017.043.015.044.013.044.012.044.011.045.009.044.007.045.006.045.004.045.002.045.001.045v17l-.001.045-.002.045-.004.045-.006.045-.007.045-.009.044-.011.045-.012.044-.013.044-.015.044-.017.043-.018.044-.02.043-.021.043-.023.043-.024.043-.026.043-.027.042-.029.042-.03.042-.032.042-.033.042-.034.041-.036.041-.037.041-.039.041-.04.041-.041.04-.043.04-.044.04-.045.04-.047.039-.048.039-.05.039-.051.039-.052.038-.053.038-.055.038-.055.038-.058.037-.058.037-.06.037-.06.036-.062.036-.064.036-.064.036-.066.035-.067.035-.068.035-.069.035-.07.034-.071.034-.073.033-.074.033-.15.066-.155.064-.16.063-.163.061-.168.06-.172.059-.175.057-.18.056-.183.054-.187.053-.191.051-.194.05-.198.048-.201.046-.205.045-.208.043-.211.041-.214.04-.217.038-.22.036-.223.034-.225.032-.229.031-.231.028-.233.027-.236.024-.239.023-.241.02-.242.019-.246.016-.247.015-.249.012-.251.01-.253.008-.255.005-.256.004-.258.001-.258-.001-.256-.004-.255-.005-.253-.008-.251-.01-.249-.012-.247-.015-.245-.016-.243-.019-.241-.02-.238-.023-.236-.024-.234-.027-.231-.028-.228-.031-.226-.032-.223-.034-.22-.036-.217-.038-.214-.04-.211-.041-.208-.043-.204-.045-.201-.046-.198-.048-.195-.05-.19-.051-.187-.053-.184-.054-.179-.056-.176-.057-.172-.059-.167-.06-.164-.061-.159-.063-.155-.064-.151-.066-.074-.033-.072-.033-.072-.034-.07-.034-.069-.035-.068-.035-.067-.035-.066-.035-.064-.036-.063-.036-.062-.036-.061-.036-.06-.037-.058-.037-.057-.037-.056-.038-.055-.038-.053-.038-.052-.038-.051-.039-.049-.039-.049-.039-.046-.039-.046-.04-.044-.04-.043-.04-.041-.04-.04-.041-.039-.041-.037-.041-.036-.041-.034-.041-.033-.042-.032-.042-.03-.042-.029-.042-.027-.042-.026-.043-.024-.043-.023-.043-.021-.043-.02-.043-.018-.044-.017-.043-.015-.044-.013-.044-.012-.044-.011-.045-.009-.044-.007-.045-.006-.045-.004-.045-.002-.045-.001-.045v-17l.001-.045.002-.045.004-.045.006-.045.007-.045.009-.044.011-.045.012-.044.013-.044.015-.044.017-.043.018-.044.02-.043.021-.043.023-.043.024-.043.026-.043.027-.042.029-.042.03-.042.032-.042.033-.042.034-.041.036-.041.037-.041.039-.041.04-.041.041-.04.043-.04.044-.04.046-.04.046-.039.049-.039.049-.039.051-.039.052-.038.053-.038.055-.038.056-.038.057-.037.058-.037.06-.037.061-.036.062-.036.063-.036.064-.036.066-.035.067-.035.068-.035.069-.035.07-.034.072-.034.072-.033.074-.033.151-.066.155-.064.159-.063.164-.061.167-.06.172-.059.176-.057.179-.056.184-.054.187-.053.19-.051.195-.05.198-.048.201-.046.204-.045.208-.043.211-.041.214-.04.217-.038.22-.036.223-.034.226-.032.228-.031.231-.028.234-.027.236-.024.238-.023.241-.02.243-.019.245-.016.247-.015.249-.012.251-.01.253-.008.255-.005.256-.004.258-.001.258.001zm-9.258 20.499v.01l.001.021.003.021.004.022.005.021.006.022.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.023.018.024.019.024.021.024.022.025.023.024.024.025.052.049.056.05.061.051.066.051.07.051.075.051.079.052.084.052.088.052.092.052.097.052.102.051.105.052.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.048.144.049.147.047.152.047.155.047.16.045.163.045.167.043.171.043.176.041.178.041.183.039.187.039.19.037.194.035.197.035.202.033.204.031.209.03.212.029.216.027.219.025.222.024.226.021.23.02.233.018.236.016.24.015.243.012.246.01.249.008.253.005.256.004.259.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.021.224-.024.22-.026.216-.027.212-.028.21-.031.205-.031.202-.034.198-.034.194-.036.191-.037.187-.039.183-.04.179-.04.175-.042.172-.043.168-.044.163-.045.16-.046.155-.046.152-.047.148-.048.143-.049.139-.049.136-.05.131-.05.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.053.083-.051.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.05.023-.024.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.023.01-.022.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.127l-.077.055-.08.053-.083.054-.085.053-.087.052-.09.052-.093.051-.095.05-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.045-.118.044-.12.043-.122.042-.124.042-.126.041-.128.04-.13.04-.132.038-.134.038-.135.037-.138.037-.139.035-.142.035-.143.034-.144.033-.147.032-.148.031-.15.03-.151.03-.153.029-.154.027-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.01-.179.008-.179.008-.181.006-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.006-.179-.008-.179-.008-.178-.01-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.027-.153-.029-.151-.03-.15-.03-.148-.031-.146-.032-.145-.033-.143-.034-.141-.035-.14-.035-.137-.037-.136-.037-.134-.038-.132-.038-.13-.04-.128-.04-.126-.041-.124-.042-.122-.042-.12-.044-.117-.043-.116-.045-.113-.045-.112-.046-.109-.047-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.05-.093-.052-.09-.051-.087-.052-.085-.053-.083-.054-.08-.054-.077-.054v4.127zm0-5.654v.011l.001.021.003.021.004.021.005.022.006.022.007.022.009.022.01.022.011.023.012.023.013.023.015.024.016.023.017.024.018.024.019.024.021.024.022.024.023.025.024.024.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.052.11.051.114.051.119.052.123.05.127.051.131.05.135.049.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.044.171.042.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.022.23.02.233.018.236.016.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.012.241-.015.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.048.139-.05.136-.049.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.051.051-.049.023-.025.023-.024.021-.025.02-.024.019-.024.018-.024.017-.024.015-.023.014-.023.013-.024.012-.022.01-.023.01-.023.008-.022.006-.022.006-.022.004-.021.004-.022.001-.021.001-.021v-4.139l-.077.054-.08.054-.083.054-.085.052-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.049-.105.048-.106.047-.109.047-.111.046-.114.045-.115.044-.118.044-.12.044-.122.042-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.035-.143.033-.144.033-.147.033-.148.031-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.025-.161.024-.162.023-.163.022-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.011-.178.009-.179.009-.179.007-.181.007-.182.005-.182.004-.184.003-.184.002h-.37l-.184-.002-.184-.003-.182-.004-.182-.005-.181-.007-.179-.007-.179-.009-.178-.009-.176-.011-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.022-.162-.023-.161-.024-.159-.025-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.031-.146-.033-.145-.033-.143-.033-.141-.035-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.04-.126-.041-.124-.042-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.047-.105-.048-.102-.049-.1-.049-.097-.05-.095-.051-.093-.051-.09-.051-.087-.053-.085-.052-.083-.054-.08-.054-.077-.054v4.139zm0-5.666v.011l.001.02.003.022.004.021.005.022.006.021.007.022.009.023.01.022.011.023.012.023.013.023.015.023.016.024.017.024.018.023.019.024.021.025.022.024.023.024.024.025.052.05.056.05.061.05.066.051.07.051.075.052.079.051.084.052.088.052.092.052.097.052.102.052.105.051.11.052.114.051.119.051.123.051.127.05.131.05.135.05.139.049.144.048.147.048.152.047.155.046.16.045.163.045.167.043.171.043.176.042.178.04.183.04.187.038.19.037.194.036.197.034.202.033.204.032.209.03.212.028.216.027.219.025.222.024.226.021.23.02.233.018.236.017.24.014.243.012.246.01.249.008.253.006.256.003.259.001.26-.001.257-.003.254-.006.25-.008.247-.01.244-.013.241-.014.237-.016.233-.018.231-.02.226-.022.224-.024.22-.025.216-.027.212-.029.21-.03.205-.032.202-.033.198-.035.194-.036.191-.037.187-.039.183-.039.179-.041.175-.042.172-.043.168-.044.163-.045.16-.045.155-.047.152-.047.148-.048.143-.049.139-.049.136-.049.131-.051.126-.05.123-.051.118-.052.114-.051.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.052.07-.051.065-.051.06-.051.056-.05.051-.049.023-.025.023-.025.021-.024.02-.024.019-.024.018-.024.017-.024.015-.023.014-.024.013-.023.012-.023.01-.022.01-.023.008-.022.006-.022.006-.022.004-.022.004-.021.001-.021.001-.021v-4.153l-.077.054-.08.054-.083.053-.085.053-.087.053-.09.051-.093.051-.095.051-.097.05-.1.049-.102.048-.105.048-.106.048-.109.046-.111.046-.114.046-.115.044-.118.044-.12.043-.122.043-.124.042-.126.041-.128.04-.13.039-.132.039-.134.038-.135.037-.138.036-.139.036-.142.034-.143.034-.144.033-.147.032-.148.032-.15.03-.151.03-.153.028-.154.028-.156.027-.158.026-.159.024-.161.024-.162.023-.163.023-.165.021-.166.02-.167.019-.169.018-.169.017-.171.016-.173.015-.173.014-.175.013-.175.012-.177.01-.178.01-.179.009-.179.007-.181.006-.182.006-.182.004-.184.003-.184.001-.185.001-.185-.001-.184-.001-.184-.003-.182-.004-.182-.006-.181-.006-.179-.007-.179-.009-.178-.01-.176-.01-.176-.012-.175-.013-.173-.014-.172-.015-.171-.016-.17-.017-.169-.018-.167-.019-.166-.02-.165-.021-.163-.023-.162-.023-.161-.024-.159-.024-.157-.026-.156-.027-.155-.028-.153-.028-.151-.03-.15-.03-.148-.032-.146-.032-.145-.033-.143-.034-.141-.034-.14-.036-.137-.036-.136-.037-.134-.038-.132-.039-.13-.039-.128-.041-.126-.041-.124-.041-.122-.043-.12-.043-.117-.044-.116-.044-.113-.046-.112-.046-.109-.046-.106-.048-.105-.048-.102-.048-.1-.05-.097-.049-.095-.051-.093-.051-.09-.052-.087-.052-.085-.053-.083-.053-.08-.054-.077-.054v4.153zm8.74-8.179l-.257.004-.254.005-.25.008-.247.011-.244.012-.241.014-.237.016-.233.018-.231.021-.226.022-.224.023-.22.026-.216.027-.212.028-.21.031-.205.032-.202.033-.198.034-.194.036-.191.038-.187.038-.183.04-.179.041-.175.042-.172.043-.168.043-.163.045-.16.046-.155.046-.152.048-.148.048-.143.048-.139.049-.136.05-.131.05-.126.051-.123.051-.118.051-.114.052-.11.052-.106.052-.101.052-.096.052-.092.052-.088.052-.083.052-.079.052-.074.051-.07.052-.065.051-.06.05-.056.05-.051.05-.023.025-.023.024-.021.024-.02.025-.019.024-.018.024-.017.023-.015.024-.014.023-.013.023-.012.023-.01.023-.01.022-.008.022-.006.023-.006.021-.004.022-.004.021-.001.021-.001.021.001.021.001.021.004.021.004.022.006.021.006.023.008.022.01.022.01.023.012.023.013.023.014.023.015.024.017.023.018.024.019.024.02.025.021.024.023.024.023.025.051.05.056.05.06.05.065.051.07.052.074.051.079.052.083.052.088.052.092.052.096.052.101.052.106.052.11.052.114.052.118.051.123.051.126.051.131.05.136.05.139.049.143.048.148.048.152.048.155.046.16.046.163.045.168.043.172.043.175.042.179.041.183.04.187.038.191.038.194.036.198.034.202.033.205.032.21.031.212.028.216.027.22.026.224.023.226.022.231.021.233.018.237.016.241.014.244.012.247.011.25.008.254.005.257.004.26.001.26-.001.257-.004.254-.005.25-.008.247-.011.244-.012.241-.014.237-.016.233-.018.231-.021.226-.022.224-.023.22-.026.216-.027.212-.028.21-.031.205-.032.202-.033.198-.034.194-.036.191-.038.187-.038.183-.04.179-.041.175-.042.172-.043.168-.043.163-.045.16-.046.155-.046.152-.048.148-.048.143-.048.139-.049.136-.05.131-.05.126-.051.123-.051.118-.051.114-.052.11-.052.106-.052.101-.052.096-.052.092-.052.088-.052.083-.052.079-.052.074-.051.07-.052.065-.051.06-.05.056-.05.051-.05.023-.025.023-.024.021-.024.02-.025.019-.024.018-.024.017-.023.015-.024.014-.023.013-.023.012-.023.01-.023.01-.022.008-.022.006-.023.006-.021.004-.022.004-.021.001-.021.001-.021-.001-.021-.001-.021-.004-.021-.004-.022-.006-.021-.006-.023-.008-.022-.01-.022-.01-.023-.012-.023-.013-.023-.014-.023-.015-.024-.017-.023-.018-.024-.019-.024-.02-.025-.021-.024-.023-.024-.023-.025-.051-.05-.056-.05-.06-.05-.065-.051-.07-.052-.074-.051-.079-.052-.083-.052-.088-.052-.092-.052-.096-.052-.101-.052-.106-.052-.11-.052-.114-.052-.118-.051-.123-.051-.126-.051-.131-.05-.136-.05-.139-.049-.143-.048-.148-.048-.152-.048-.155-.046-.16-.046-.163-.045-.168-.043-.172-.043-.175-.042-.179-.041-.183-.04-.187-.038-.191-.038-.194-.036-.198-.034-.202-.033-.205-.032-.21-.031-.212-.028-.216-.027-.22-.026-.224-.023-.226-.022-.231-.021-.233-.018-.237-.016-.241-.014-.244-.012-.247-.011-.25-.008-.254-.005-.257-.004-.26-.001-.26.001z"/></symbol></defs><defs><symbol id="my-svg-clock" width="24" height="24"><path transform="scale(.5)" d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.848 12.459c.202.038.202.333.001.372-1.907.361-6.045 1.111-6.547 1.111-.719 0-1.301-.582-1.301-1.301 0-.512.77-5.447 1.125-7.445.034-.192.312-.181.343.014l.985 6.238 5.394 1.011z"/></symbol></defs><defs><marker id="my-svg-arrowhead" refX="7.9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M -1 0 L 10 5 L 0 10 z"/></marker></defs><defs><marker id="my-svg-crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="4" refY="4.5"><path fill="none" stroke="#000000" stroke-width="1pt" d="M 1,2 L 6,7 M 6,2 L 1,7" style="stroke-dasharray: 0, 0;"/></marker></defs><defs><marker id="my-svg-filled-head" refX="15.5" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"/></marker></defs><defs><marker id="my-svg-sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"/></marker></defs><defs><marker id="my-svg-solidTopArrowHead" refX="7.9" refY="7.25" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 8 L 0 8 z"/></marker></defs><defs><marker id="my-svg-solidBottomArrowHead" refX="7.9" refY="0.75" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 10 0 L 0 8 z"/></marker></defs><defs><marker id="my-svg-stickTopArrowHead" refX="7.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 0 L 7 7" stroke="black" stroke-width="1.5" fill="none"/></marker></defs><defs><marker id="my-svg-stickBottomArrowHead" refX="7.5" refY="0" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M 0 7 L 7 0" stroke="black" stroke-width="1.5" fill="none"/></marker></defs><g data-et="control-structure" data-id="i8"><line x1="471" y1="163" x2="850" y2="163" class="loopLine"/><line x1="850" y1="163" x2="850" y2="429" class="loopLine"/><line x1="471" y1="429" x2="850" y2="429" class="loopLine"/><line x1="471" y1="163" x2="471" y2="429" class="loopLine"/><line x1="471" y1="301" x2="850" y2="301" class="loopLine" style="stroke-dasharray: 3, 3;"/><polygon points="471,163 521,163 521,176 512.6,183 471,183" class="labelBox"/><text x="496" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="labelText" style="font-size: 16px; font-weight: 400;">alt</text><text x="685.5" y="181" text-anchor="middle" class="loopText" style="font-size: 16px; font-weight: 400;"><tspan x="685.5">[Subscription exists]</tspan></text><text x="660.5" y="319" text-anchor="middle" class="sectionTitle" style="font-size: 16px; font-weight: 400;">[No subscription exists]</text></g><g class="actor-man actor-top" name="User" data-et="participant" data-type="actor" data-id="User" style="stroke: rgb(212, 212, 212);"><line id="actor-man-torso0" x1="75" y1="25" x2="75" y2="45"/><line id="actor-man-arms0" x1="57" y1="33" x2="93" y2="33"/><line x1="57" y1="60" x2="75" y2="45"/><line x1="75" y1="45" x2="91" y2="60"/><circle cx="75" cy="10" r="15" width="150" height="65"/><text x="75" y="67.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-man" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">User</tspan></text></g><text x="659" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">GET /v1.0/subscriptions</text><line x1="483" y1="109" x2="835" y2="109" class="messageLine0" data-et="message" data-id="i0" data-from="App" data-to="Graph" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="662" y="124" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">200 Existing subscriptions</text><line x1="838" y1="153" x2="486" y2="153" class="messageLine1" data-et="message" data-id="i1" data-from="Graph" data-to="App" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><text x="659" y="213" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">PATCH /v1.0/subscriptions/{subscriptionId}</text><line x1="483" y1="242" x2="835" y2="242" class="messageLine0" data-et="message" data-id="i3" data-from="App" data-to="Graph" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="662" y="257" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">200 Subscription renewed</text><line x1="838" y1="286" x2="486" y2="286" class="messageLine1" data-et="message" data-id="i4" data-from="Graph" data-to="App" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><text x="659" y="346" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">POST /v1.0/subscriptions</text><line x1="483" y1="375" x2="835" y2="375" class="messageLine0" data-et="message" data-id="i6" data-from="App" data-to="Graph" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="662" y="390" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">201 Subscription created</text><line x1="838" y1="419" x2="486" y2="419" class="messageLine1" data-et="message" data-id="i7" data-from="Graph" data-to="App" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><text x="174" y="444" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">Change presence</text><line x1="76" y1="473" x2="271" y2="473" class="messageLine0" data-et="message" data-id="i9" data-from="User" data-to="Teams" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="556" y="488" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">Update Microsoft 365 presence (Teams-managed)</text><line x1="276" y1="517" x2="835" y2="517" class="messageLine0" data-et="message" data-id="i10" data-from="Teams" data-to="Graph" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="1011" y="532" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">POST notificationUrl (change notification)</text><line x1="840" y1="561" x2="1182" y2="561" class="messageLine0" data-et="message" data-id="i11" data-from="Graph" data-to="Tunnel" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="1313" y="576" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">POST /resourceNotifications</text><line x1="1187" y1="605" x2="1438" y2="605" class="messageLine0" data-et="message" data-id="i12" data-from="Tunnel" data-to="Backend" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="964" y="620" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">Broadcast notification over WebSocket</text><line x1="1441" y1="649" x2="486" y2="649" class="messageLine1" data-et="message" data-id="i13" data-from="Backend" data-to="App" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><text x="659" y="664" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">GET /v1.0/me/presence</text><line x1="483" y1="693" x2="835" y2="693" class="messageLine0" data-et="message" data-id="i14" data-from="App" data-to="Graph" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="fill: none;"/><text x="662" y="708" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">200 Current availability and activity</text><line x1="838" y1="737" x2="486" y2="737" class="messageLine1" data-et="message" data-id="i15" data-from="Graph" data-to="App" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><text x="280" y="752" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" class="messageText" dy="1em" style="font-size: 16px; font-weight: 400;">Update presence indicator</text><line x1="481" y1="781" x2="79" y2="781" class="messageLine1" data-et="message" data-id="i16" data-from="App" data-to="User" stroke-width="2" stroke="none" marker-end="url(#my-svg-arrowhead)" style="stroke-dasharray: 3, 3; fill: none;"/><g class="actor-man actor-bottom" name="User" style="stroke: rgb(212, 212, 212);"><line id="actor-man-torso5" x1="75" y1="826" x2="75" y2="846"/><line id="actor-man-arms5" x1="57" y1="834" x2="93" y2="834"/><line x1="57" y1="861" x2="75" y2="846"/><line x1="75" y1="846" x2="91" y2="861"/><circle cx="75" cy="811" r="15" width="150" height="65"/><text x="75" y="868.5" dominant-baseline="central" alignment-baseline="central" class="actor actor-man" style="text-anchor: middle; font-size: 16px; font-weight: 400;"><tspan x="75" dy="0">User</tspan></text></g></svg></div><h2>Microsoft Graph API Calls</h2>
+<p>All Graph paths use the base URL <code>https://graph.microsoft.com</code>.</p>
+<ul>
+<li><code>GET /v1.0/subscriptions</code> checks whether the presence subscription already exists.</li>
+<li><code>POST /v1.0/subscriptions</code> creates a subscription for <code>/communications/presences/{userId}</code>.</li>
+<li><code>PATCH /v1.0/subscriptions/{subscriptionId}</code> renews the subscription before it expires.</li>
+<li><code>POST {notificationUrl}</code> is the Graph webhook callback routed through the Dev Tunnel to <code>/resourceNotifications</code>.</li>
+<li><code>GET /v1.0/me/presence</code> retrieves the latest availability and activity after the notification arrives.</li>
+</ul>
+<p>The presence change made in Microsoft Teams is Teams-managed; Unified App does not call Graph to make that change during this demo.</p>
+<h2>Why This Matters</h2>
+<p>This is a push-triggered model. Unified App does not continuously poll Microsoft Graph. Graph signals that something changed, and the application retrieves the current state only when needed.</p>
+<p><strong>Result:</strong> faster updates, fewer requests, and more reliable context for connected or agent-driven experiences.</p>
+<h2>Code Walkthrough</h2>
+<h3>1. Create or renew the Graph subscription</h3>
+<p><strong>File:</strong> <a href="https://github.com/InteropEvents/UnifiedApp/blob/main/frontend/src/services/graphPresenceService.tsx"><code>frontend/src/services/graphPresenceService.tsx</code></a></p>
+<div class="highlight"><pre><span></span><span class="kd">const</span><span class="w"> </span><span class="nx">notificationUrl</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="sb">`https://</span><span class="si">${</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REACT_APP_DOMAIN</span><span class="si">}</span><span class="sb">/resourceNotifications`</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">expirationDateTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">(</span>
+<span class="w">  </span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">55</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">60</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1000</span>
+<span class="p">).</span><span class="nx">toISOString</span><span class="p">();</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">existingSubscription</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">existingSubscriptions</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">sub</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">sub</span><span class="p">.</span><span class="nx">resource</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="sb">`/communications/presences/</span><span class="si">${</span><span class="nx">userId</span><span class="si">}</span><span class="sb">`</span>
+<span class="p">);</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">existingSubscription</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">client</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">api</span><span class="p">(</span><span class="sb">`/subscriptions/</span><span class="si">${</span><span class="nx">existingSubscription</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">patch</span><span class="p">({</span><span class="w"> </span><span class="nx">expirationDateTime</span><span class="w"> </span><span class="p">});</span>
+<span class="w">  </span><span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nx">client</span><span class="p">.</span><span class="nx">api</span><span class="p">(</span><span class="s1">&#39;/subscriptions&#39;</span><span class="p">).</span><span class="nx">post</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">changeType</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;updated&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">notificationUrl</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">resource</span><span class="o">:</span><span class="w"> </span><span class="sb">`/communications/presences/</span><span class="si">${</span><span class="nx">userId</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">expirationDateTime</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">clientState</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;secretClientState&#39;</span><span class="p">,</span>
+<span class="p">});</span>
+</pre></div>
+<h3>2. Receive the webhook notification</h3>
+<p><strong>File:</strong> <a href="https://github.com/InteropEvents/UnifiedApp/blob/main/backend/src/server.js"><code>backend/src/server.js</code></a></p>
+<div class="highlight"><pre><span></span><span class="k">this</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span>
+<span class="w">  </span><span class="s2">&quot;/resourceNotifications&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">handleResourceNotifications</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">notifications</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+<span class="k">await</span><span class="w"> </span><span class="nx">NotificationService</span><span class="p">.</span><span class="nx">handleNotifications</span><span class="p">(</span><span class="nx">notifications</span><span class="p">);</span>
+<span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mf">200</span><span class="p">).</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;Notification received&quot;</span><span class="p">);</span>
+</pre></div>
+<h3>3. Relay the notification</h3>
+<p><strong>File:</strong> <a href="https://github.com/InteropEvents/UnifiedApp/blob/main/backend/services/notificationservice.js"><code>backend/services/notificationservice.js</code></a></p>
+<div class="highlight"><pre><span></span><span class="k">async</span><span class="w"> </span><span class="nx">processNotification</span><span class="p">(</span><span class="nx">notification</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">WssSocketService</span><span class="p">.</span><span class="nx">broadcast</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">notification</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+<h3>4. Retrieve the current state and update the UI</h3>
+<p><strong>File:</strong> <a href="https://github.com/InteropEvents/UnifiedApp/blob/main/frontend/src/MGTInternal/login/login.tsx"><code>frontend/src/MGTInternal/login/login.tsx</code></a></p>
+<div class="highlight"><pre><span></span><span class="nx">socket</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">event</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="nx">data</span><span class="p">.</span><span class="nx">resource</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="sb">`communications/presences(&#39;</span><span class="si">${</span><span class="nx">userId</span><span class="si">}</span><span class="sb">&#39;)`</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">    </span><span class="nx">data</span><span class="p">.</span><span class="nx">changeType</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;updated&#39;</span>
+<span class="w">  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">latestPresence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">getUserPresence</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">setPresence</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">presenceMap</span><span class="p">[</span><span class="nx">latestPresence</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s1">&#39;Offline&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s1">&#39;Offline&#39;</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+<h2>Presenter Line</h2>
+<blockquote>
+<p>“Teams updates my presence, Microsoft Graph notifies Unified App through a webhook, and Unified App retrieves the latest status only when needed. The interface updates almost immediately without a manual refresh.”</p>
+</blockquote>
+
+    <footer class="footer">Unified App · Building Connected Microsoft 365 Experiences</footer>
+  </main>
+</body>
+</html>

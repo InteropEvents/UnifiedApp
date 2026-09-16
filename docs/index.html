@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unified App Demo One-Pagers</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #102d38; background: #f4f7f6; font-family: "Segoe UI", sans-serif; letter-spacing: 0; }
+    main { width: min(1260px, calc(100% - 40px)); margin: 0 auto; padding: 82px 0; }
+    .eyebrow { color: #167d7b; font-size: 14px; font-weight: 800; text-transform: uppercase; }
+    h1 { max-width: 900px; margin: 12px 0 18px; font-size: clamp(42px, 6vw, 76px); line-height: 1.02; }
+    .intro { max-width: 760px; margin-bottom: 48px; color: #5b7078; font-size: 20px; line-height: 1.55; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card {
+      position: relative; min-height: 330px; padding: 30px; color: #344b54; background: #fff;
+      border-top: 7px solid var(--accent); box-shadow: 0 14px 36px rgba(12, 47, 58, .10);
+      text-decoration: none; transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 20px 42px rgba(12, 47, 58, .16); }
+    .card-number { display: inline-grid; width: 42px; height: 42px; place-items: center; color: #fff; background: var(--accent); border-radius: 4px; font-weight: 800; }
+    .card strong { display: block; margin: 44px 0 14px; color: #102d38; font-size: 31px; }
+    .card span:not(.card-number) { display: block; line-height: 1.55; }
+    .card em { position: absolute; left: 30px; bottom: 28px; color: var(--accent); font-style: normal; font-weight: 700; }
+    .note { margin-top: 30px; color: #6b7e85; font-size: 14px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .card { min-height: 260px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Building Connected Microsoft 365 Experiences</div>
+    <h1>Unified App demo one-pagers</h1>
+    <p class="intro">Three presentation-ready walkthroughs with sequence diagrams, implementation flow, exact source filenames, and focused code excerpts.</p>
+    <section class="grid" aria-label="Demo scenarios">
+        <a class="card" href="01-presence-webhook.html" style="--accent:#c94f8a;--soft:#fbeaf3">
+          <span class="card-number">01</span>
+          <strong>Presence</strong>
+          <span>Push-triggered presence updates through Microsoft Graph webhooks and WebSocket relay.</span>
+          <em>Open one-pager →</em>
+        </a>
+
+        <a class="card" href="02-calendar-ai-summary.html" style="--accent:#377cf4;--soft:#eaf1ff">
+          <span class="card-number">02</span>
+          <strong>Calendar AI</strong>
+          <span>Meeting context transformed into structured, actionable summaries with Azure OpenAI.</span>
+          <em>Open one-pager →</em>
+        </a>
+
+        <a class="card" href="03-teams-channel-files.html" style="--accent:#167d7b;--soft:#e6f5f3">
+          <span class="card-number">03</span>
+          <strong>Teams Files</strong>
+          <span>One shared channel file experience across Unified App and Microsoft Teams.</span>
+          <em>Open one-pager →</em>
+        </a></section>
+    <p class="note">These files are self-contained. Open them directly in a browser, present full-screen, or use Print / Save PDF.</p>
+  </main>
+</body>
+</html>
