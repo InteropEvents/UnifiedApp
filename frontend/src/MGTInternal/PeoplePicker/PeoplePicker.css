@@ -1,0 +1,89 @@
+.people-picker {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+.selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.selected-person {
+  background: #e6f7ff;
+  border-radius: 16px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.selected-person .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.remove-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 16px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+.people-picker-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.suggestions-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+  margin-top: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+}
+.suggestions-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+.suggestions-list li:hover {
+  background: #f5faff;
+}
+.suggestions-list .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.loading {
+  margin-top: 4px;
+  color: #888;
+}
+.no-results {
+  margin-top: 4px;
+  color: #d00;
+}
+.mail {
+  margin-left: 8px;
+  color: #888;
+  font-size: 12px;
+}
+.jobTitle {
+  margin-left: 8px;
+  color: #888;
+  font-size: 12px;
+}
